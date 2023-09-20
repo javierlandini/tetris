@@ -8,6 +8,7 @@ class Tetris {
   board;
   piece;
   score;
+  gameOver;
   constructor() {
     this.#X_BOARD = 10;
     this.#Y_BOARD = 20;
@@ -43,6 +44,7 @@ class Tetris {
       .map(() => Array(this.#X_BOARD).fill(0));
 
     this.score = 0;
+    this.gameOver = false;
 
     this.generatePiece();
   }
@@ -86,8 +88,14 @@ class Tetris {
               ? 0
               : stick
               ? 2
+              : this.board[newY][newX] > 0
+              ? 3
               : 1
             : this.board[newY][newX];
+
+        if (this.board[newY][newX] == 3) {
+          this.gameOver = true;
+        }
       }
     }
 
@@ -160,6 +168,10 @@ export default function Home() {
   useEffect(() => {
     const handleKeyDown = (e) => {
       console.log(e);
+      e.preventDefault();
+      if (tetris.gameOver) {
+        return;
+      }
       if (e.key == "ArrowDown") {
         tetris.movePiece(0, 1);
       }
@@ -190,8 +202,11 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main>
-        <div>Score: {tetris.score}</div>
+      <main className={tetris.gameOver ? "game-over" : ""}>
+        <div className="game-over-msg">
+          {tetris.gameOver ? "GAME OVER" : null}
+        </div>
+        <div className="score-msg">Score: {tetris.score}</div>
         {tetris.board.map((row, index) => {
           return (
             <div key={index}>
@@ -202,7 +217,13 @@ export default function Home() {
                   height: "20px",
                   display: "inline-block",
                   backgroundColor:
-                    cell == 0 ? "white" : cell == 1 ? "blue" : "red",
+                    cell == 0
+                      ? "white"
+                      : cell == 1
+                      ? "blue"
+                      : cell == 2
+                      ? "red"
+                      : "gray",
                 };
                 return (
                   <span key={j} style={style}>
