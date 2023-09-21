@@ -217,7 +217,7 @@ export default function Home() {
   useEffect(() => {
     const id = setInterval(() => {
       if (!tetris.gameOver) {
-        if (counter === tetris.speed) {
+        if (counter <= tetris.speed) {
           // Reset counter.
           setCounter(tetris.MAX_SPEED);
           tetris.movePiece(0, 1);
