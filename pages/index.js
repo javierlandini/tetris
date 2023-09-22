@@ -3,12 +3,39 @@ import styles from '../styles/Home.module.css';
 import { useEffect, useState } from "react";
 
 class Tetris {
-  #X_BOARD = 10;
-  #Y_BOARD = 20;
-  MAX_SPEED = 4;
+  static X_BOARD = 10;
+  static Y_BOARD = 20;
+  static MAX_SPEED = 4;
   static GAME_NOT_STARTED = 0;
   static GAME_STARTED = 1;
   static GAME_OVER = 2;
+  static SHAPES = [
+    [[1, 1, 1, 1]],
+    [
+      [1, 1],
+      [1, 1],
+    ],
+    [
+      [0, 1, 0],
+      [1, 1, 1],
+    ],
+    [
+      [1, 1, 0],
+      [0, 1, 1],
+    ],
+    [
+      [0, 1, 1],
+      [1, 1, 0],
+    ],
+    [
+      [1, 0, 0],
+      [1, 1, 1],
+    ],
+    [
+      [0, 0, 1],
+      [1, 1, 1],
+    ],
+  ];
   board;
   piece;
   score;
@@ -17,43 +44,16 @@ class Tetris {
   constructor() {
     this.speed = 0;
     this.gameStatus = Tetris.GAME_NOT_STARTED;
-    this.SHAPES = [
-      [[1, 1, 1, 1]],
-      [
-        [1, 1],
-        [1, 1],
-      ],
-      [
-        [0, 1, 0],
-        [1, 1, 1],
-      ],
-      [
-        [1, 1, 0],
-        [0, 1, 1],
-      ],
-      [
-        [0, 1, 1],
-        [1, 1, 0],
-      ],
-      [
-        [1, 0, 0],
-        [1, 1, 1],
-      ],
-      [
-        [0, 0, 1],
-        [1, 1, 1],
-      ],
-    ];
-    this.board = Array(this.#Y_BOARD)
+    this.board = Array(Tetris.Y_BOARD)
       .fill(0)
-      .map(() => Array(this.#X_BOARD).fill(0));
+      .map(() => Array(Tetris.X_BOARD).fill(0));
   }
 
   init() {
     console.log("Game starting...");
-    this.board = Array(this.#Y_BOARD)
+    this.board = Array(Tetris.Y_BOARD)
       .fill(0)
-      .map(() => Array(this.#X_BOARD).fill(0));
+      .map(() => Array(Tetris.X_BOARD).fill(0));
     this.score = 0;
     this.gameStatus = Tetris.GAME_STARTED;
     this.speed = 0;
@@ -61,9 +61,10 @@ class Tetris {
   }
 
   generatePiece() {
-    const shape = this.SHAPES[Math.floor(Math.random() * this.SHAPES.length)];
+    const shape =
+      Tetris.SHAPES[Math.floor(Math.random() * Tetris.SHAPES.length)];
     this.piece = {
-      x: Math.floor(Math.random() * (this.#X_BOARD - shape[0].length + 1)),
+      x: Math.floor(Math.random() * (Tetris.X_BOARD - shape[0].length + 1)),
       y: 0,
       shape,
     };
@@ -77,11 +78,11 @@ class Tetris {
     );
     this.piece.shape = newShape;
 
-    while (this.piece.y + this.piece.shape.length > this.#Y_BOARD) {
+    while (this.piece.y + this.piece.shape.length > Tetris.Y_BOARD) {
       this.piece.y--;
     }
 
-    while (this.piece.x + this.piece.shape[0].length > this.#X_BOARD) {
+    while (this.piece.x + this.piece.shape[0].length > Tetris.X_BOARD) {
       this.piece.x--;
     }
 
@@ -128,9 +129,9 @@ class Tetris {
         // Check we don't go outside the board and there's no collision.
         if (
           (dx != 0 &&
-            (newX < 0 || newX + this.piece.shape[0].length > this.#X_BOARD)) ||
+            (newX < 0 || newX + this.piece.shape[0].length > Tetris.X_BOARD)) ||
           (dy != 0 &&
-            (newY < 0 || newY + this.piece.shape.length > this.#Y_BOARD)) ||
+            (newY < 0 || newY + this.piece.shape.length > Tetris.Y_BOARD)) ||
           (this.board[newY + y][newX + x] > 0 && this.piece.shape[y][x] == 1)
         ) {
           validMove = false;
@@ -138,7 +139,7 @@ class Tetris {
         // Check if we need to stick the piece.
         if (
           dy &&
-          (newY + this.piece.shape.length - 1 === this.#Y_BOARD ||
+          (newY + this.piece.shape.length - 1 === Tetris.Y_BOARD ||
             (this.board[newY + y][newX + x] > 0 && this.piece.shape[y][x] == 1))
         ) {
           stick = true;
@@ -159,19 +160,19 @@ class Tetris {
   clearCompleteLines() {
     let lines = 0;
     this.board = this.board.filter((line) => {
-      for (let x = 0; x < this.#X_BOARD; x++) {
+      for (let x = 0; x < Tetris.X_BOARD; x++) {
         if (line[x] !== 2) {
           return true;
         }
       }
     });
-    while (this.board.length < this.#Y_BOARD) {
-      this.board.unshift(Array(this.#X_BOARD).fill(0));
+    while (this.board.length < Tetris.Y_BOARD) {
+      this.board.unshift(Array(Tetris.X_BOARD).fill(0));
       lines++;
     }
     this.score = this.score + lines * lines * 100;
     this.speed =
-      Math.floor(this.score / 1000) > this.MAX_SPEED
+      Math.floor(this.score / 1000) > Tetris.MAX_SPEED
         ? 4
         : Math.floor(this.score / 1000);
   }
@@ -180,7 +181,7 @@ const tetris = new Tetris();
 
 export default function Home() {
   const [_, setState] = useState({});
-  const [counter, setCounter] = useState(tetris.MAX_SPEED);
+  const [counter, setCounter] = useState(Tetris.MAX_SPEED);
   const container_style = {
     backgroundColor:
       tetris.speed == 0
@@ -233,7 +234,7 @@ export default function Home() {
         case Tetris.GAME_STARTED:
           if (counter <= tetris.speed) {
             // Reset counter.
-            setCounter(tetris.MAX_SPEED);
+            setCounter(Tetris.MAX_SPEED);
             tetris.movePiece(0, 1);
             setState({});
           } else {
