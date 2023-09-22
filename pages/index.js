@@ -3,17 +3,20 @@ import styles from '../styles/Home.module.css';
 import { useEffect, useState } from "react";
 
 class Tetris {
-  #X_BOARD;
-  #Y_BOARD;
-  MAX_SPEED;
+  #X_BOARD = 10;
+  #Y_BOARD = 20;
+  MAX_SPEED = 4;
+  static GAME_NOT_STARTED = 0;
+  static GAME_STARTED = 1;
+  static GAME_OVER = 2;
   board;
   piece;
   score;
-  gameOver;
+  gameStatus;
   speed;
   constructor() {
-    this.#X_BOARD = 10;
-    this.#Y_BOARD = 20;
+    this.speed = 0;
+    this.gameStatus = Tetris.GAME_NOT_STARTED;
     this.SHAPES = [
       [[1, 1, 1, 1]],
       [
@@ -44,11 +47,16 @@ class Tetris {
     this.board = Array(this.#Y_BOARD)
       .fill(0)
       .map(() => Array(this.#X_BOARD).fill(0));
+  }
 
+  init() {
+    console.log("Game starting...");
+    this.board = Array(this.#Y_BOARD)
+      .fill(0)
+      .map(() => Array(this.#X_BOARD).fill(0));
     this.score = 0;
-    this.gameOver = false;
+    this.gameStatus = Tetris.GAME_STARTED;
     this.speed = 0;
-    this.MAX_SPEED = 4;
     this.generatePiece();
   }
 
@@ -97,7 +105,7 @@ class Tetris {
             : this.board[newY][newX];
 
         if (this.board[newY][newX] == 3) {
-          this.gameOver = true;
+          this.gameStatus = Tetris.GAME_OVER;
         }
       }
     }
@@ -188,7 +196,12 @@ export default function Home() {
   useEffect(() => {
     const handleKeyDown = (e) => {
       e.preventDefault();
-      if (tetris.gameOver) {
+
+      if (e.key == "Enter") {
+        tetris.init();
+      }
+
+      if (tetris.gameStatus === Tetris.GAME_OVER) {
         return;
       }
       if (e.key == "ArrowDown") {
@@ -216,16 +229,24 @@ export default function Home() {
 
   useEffect(() => {
     const id = setInterval(() => {
-      if (!tetris.gameOver) {
-        if (counter <= tetris.speed) {
-          // Reset counter.
-          setCounter(tetris.MAX_SPEED);
-          tetris.movePiece(0, 1);
-        } else {
-          setCounter(counter - 1);
-        }
+      switch (tetris.gameStatus) {
+        case Tetris.GAME_STARTED:
+          if (counter <= tetris.speed) {
+            // Reset counter.
+            setCounter(tetris.MAX_SPEED);
+            tetris.movePiece(0, 1);
+            setState({});
+          } else {
+            setCounter(counter - 1);
+          }
+          break;
+        case Tetris.GAME_NOT_STARTED:
+          tetris.init();
+          setState({});
+          break;
+        default:
+        // Do nothing.
       }
-      setState({});
     }, 100);
 
     return () => clearInterval(id);
@@ -238,9 +259,11 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className={tetris.gameOver ? "game-over" : ""}>
+      <main
+        className={tetris.gameStatus === Tetris.GAME_OVER ? "game-over" : ""}
+      >
         <div className="game-over-msg">
-          {tetris.gameOver ? "GAME OVER" : null}
+          {tetris.gameStatus === Tetris.GAME_OVER ? "GAME OVER" : null}
         </div>
         <div className="score-msg">Score: {tetris.score}</div>
         {tetris.board.map((row, index) => {
