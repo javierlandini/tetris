@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import styles from '../styles/Home.module.css';
 import { useEffect, useState } from "react";
+import { useRef } from "react";
 
 class Tetris {
   static X_BOARD = 10;
@@ -182,6 +183,7 @@ const tetris = new Tetris();
 export default function Home() {
   const [_, setState] = useState({});
   const [counter, setCounter] = useState(Tetris.MAX_SPEED);
+  const audioRef = useRef();
   const container_style = {
     backgroundColor:
       tetris.speed == 0
@@ -197,13 +199,24 @@ export default function Home() {
   useEffect(() => {
     const handleKeyDown = (e) => {
       e.preventDefault();
-
       if (e.key == "Enter") {
+        if (audioRef.current && !audioRef.current.muted) {
+          audioRef.current.load();
+        }
         tetris.init();
       }
 
       if (tetris.gameStatus === Tetris.GAME_OVER) {
         return;
+      }
+
+      if ((e.key == "M" || e.key == "m") && audioRef.current) {
+        if (audioRef.current.muted) {
+          audioRef.current.muted = false;
+          audioRef.current.play();
+        } else {
+          audioRef.current.muted = true;
+        }
       }
       if (e.key == "ArrowDown") {
         tetris.movePiece(0, 1);
@@ -245,6 +258,10 @@ export default function Home() {
           tetris.init();
           setState({});
           break;
+        case Tetris.GAME_OVER:
+          if (audioRef.current) {
+            audioRef.current.pause();
+          }
         default:
         // Do nothing.
       }
@@ -259,7 +276,9 @@ export default function Home() {
         <title>Tetris example</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-
+      <audio ref={audioRef} autoPlay muted loop={true}>
+        <source src="/POL-puzzle-kid-short.wav" type="audio/wav"></source>
+      </audio>
       <main
         className={tetris.gameStatus === Tetris.GAME_OVER ? "game-over" : ""}
       >
