@@ -9,7 +9,8 @@ class Tetris {
   static MAX_SPEED = 4;
   static GAME_NOT_STARTED = 0;
   static GAME_STARTED = 1;
-  static GAME_OVER = 2;
+  static GAME_PAUSED = 2;
+  static GAME_OVER = 3;
   static SHAPES = [
     [[1, 1, 1, 1]],
     [
@@ -177,6 +178,16 @@ class Tetris {
         ? 4
         : Math.floor(this.score / 1000);
   }
+
+  pause() {
+    if (this.gameStatus === Tetris.GAME_STARTED) {
+      this.gameStatus = Tetris.GAME_PAUSED;
+    }
+  }
+
+  unpause() {
+    this.gameStatus = Tetris.GAME_STARTED;
+  }
 }
 const tetris = new Tetris();
 
@@ -210,6 +221,18 @@ export default function Home() {
         return;
       }
 
+      if (e.key == "P" || e.key == "p") {
+        if (tetris.gameStatus === Tetris.GAME_PAUSED) {
+          tetris.unpause();
+        } else {
+          tetris.pause();
+        }
+      }
+
+      if (tetris.gameStatus === Tetris.GAME_PAUSED) {
+        return;
+      }
+
       if ((e.key == "M" || e.key == "m") && audioRef.current) {
         if (audioRef.current.muted) {
           audioRef.current.muted = false;
@@ -218,6 +241,7 @@ export default function Home() {
           audioRef.current.muted = true;
         }
       }
+
       if (e.key == "ArrowDown") {
         tetris.movePiece(0, 1);
       }
