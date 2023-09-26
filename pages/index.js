@@ -40,6 +40,7 @@ class Tetris {
   ];
   board;
   piece;
+  oldPiece;
   score;
   gameStatus;
   speed;
@@ -87,6 +88,13 @@ class Tetris {
     while (this.piece.x + this.piece.shape[0].length > Tetris.X_BOARD) {
       this.piece.x--;
     }
+    let { _, validMove } = this.validateMove({});
+    let valid = validMove;
+    while (!valid) {
+      this.piece.y--;
+      let { _, validMove } = this.validateMove({});
+      valid = validMove;
+    }
 
     this.placePiece({});
   }
@@ -120,39 +128,48 @@ class Tetris {
   }
 
   movePiece(dx, dy) {
-    let newX = this.piece.x + dx;
-    let newY = this.piece.y + dy;
-    let stick = false;
-    let validMove = true;
+    this.oldPiece = { ...this.piece };
     this.removePiece();
+    this.piece.x = this.piece.x + dx;
+    this.piece.y = this.piece.y + dy;
+
+    let { stick, validMove } = this.validateMove({ movingDown: dy });
+    if (!validMove) {
+      this.piece = { ...this.oldPiece };
+    }
+    this.placePiece({ stick });
+  }
+
+  validateMove({ movingDown = false }) {
+    let validMove = true;
+    let stick = false;
 
     for (let y = 0; y < this.piece.shape.length; y++) {
       for (let x = 0; x < this.piece.shape[y].length; x++) {
         // Check we don't go outside the board and there's no collision.
         if (
-          (dx != 0 &&
-            (newX < 0 || newX + this.piece.shape[0].length > Tetris.X_BOARD)) ||
-          (dy != 0 &&
-            (newY < 0 || newY + this.piece.shape.length > Tetris.Y_BOARD)) ||
-          (this.board[newY + y][newX + x] > 0 && this.piece.shape[y][x] == 1)
+          this.piece.x < 0 ||
+          this.piece.x + this.piece.shape[0].length > Tetris.X_BOARD ||
+          this.piece.y < 0 ||
+          this.piece.y + this.piece.shape.length > Tetris.Y_BOARD ||
+          (this.board[this.piece.y + y][this.piece.x + x] > 0 &&
+            this.piece.shape[y][x] == 1)
         ) {
           validMove = false;
         }
-        // Check if we need to stick the piece.
+        // If moving down, check if we need to stick the piece.
         if (
-          dy &&
-          (newY + this.piece.shape.length - 1 === Tetris.Y_BOARD ||
-            (this.board[newY + y][newX + x] > 0 && this.piece.shape[y][x] == 1))
+          movingDown &&
+          (this.piece.y + this.piece.shape.length - 1 === Tetris.Y_BOARD ||
+            (this.board[this.piece.y + y][this.piece.x + x] > 0 &&
+              this.piece.shape[y][x] == 1))
         ) {
           stick = true;
         }
       }
     }
-    if (validMove) {
-      this.piece.x = newX;
-      this.piece.y = newY;
-    }
-    this.placePiece({ stick });
+
+    return { validMove, stick };
   }
 
   removePiece() {
@@ -224,8 +241,14 @@ export default function Home() {
       if (e.key == "P" || e.key == "p") {
         if (tetris.gameStatus === Tetris.GAME_PAUSED) {
           tetris.unpause();
+          if (audioRef.current) {
+            audioRef.current.play();
+          }
         } else {
           tetris.pause();
+          if (audioRef.current) {
+            audioRef.current.pause();
+          }
         }
       }
 
